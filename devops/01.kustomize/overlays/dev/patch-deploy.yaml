@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+  namespace: skala-practice
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+      - name: my-app
+        env:
+        - name: NAMESPACE
+          value: skala-practice
+        volumeMounts:
+        - name: app-config
+          mountPath: /app/config
+          readOnly: true
+      volumes:
+        - name: app-config
+          configMap:
+            name: app-config  

@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: sk000-my-app
+  namespace: skala-argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - environment: dev
+        path: k8s/dev
+        server: https://96BD83E8CE5CE0396D006BC5CEB350B0.gr7.ap-northeast-2.eks.amazonaws.com
+      - environment: stage
+        path: k8s/stage
+        server: https://96BD83E8CE5CE0396D006BC5CEB350B0.gr7.ap-northeast-2.eks.amazonaws.com
+      - environment: prod
+        path: k8s/prod
+        server: https://96BD83E8CE5CE0396D006BC5CEB350B0.gr7.ap-northeast-2.eks.amazonaws.com
+  template:
+    metadata:
+      name: sk000-my-app-{{environment}}
+      namespace: skala-argocd
+    spec:
+      destination:
+        namespace: skala-practice
+        server: '{{server}}'
+      project: skala
+      source:
+        path: '{{path}}'
+        repoURL: https://github.com/rde-devplace/devops-source.git
+        targetRevision: HEAD
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - PrunePropagationPolicy=background

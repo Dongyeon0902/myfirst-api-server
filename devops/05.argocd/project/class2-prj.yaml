@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  creationTimestamp: "2025-05-12T06:09:00Z"
+  generation: 2
+  name: class-2
+  namespace: skala-argocd
+  resourceVersion: "70615324"
+  uid: ece19b1e-fcf4-4908-ab10-f56517a2e6b5
+spec:
+  destinations:
+  - name: skala-2025
+    namespace: '*'
+    server: https://96BD83E8CE5CE0396D006BC5CEB350B0.gr7.ap-northeast-2.eks.amazonaws.com
+  - name: in-cluster
+    namespace: '*'
+    server: https://kubernetes.default.svc
+status: {}

@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sk199-custom-jenkins
+  namespace: skala-practice
+  labels:
+    app: sk199-custom-jenkins
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sk199-custom-jenkins
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '8080'
+        prometheus.io/path: '/actuator/prometheus'
+        update: bc8742121
+      labels:
+        app: sk199-custom-jenkins
+    spec:
+      serviceAccountName: jenkins
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+      initContainers:
+      # Jenkins 초기화 및 설정 (권한 설정 + 파일 복사 통합)
+      - name: jenkins-init
+        image: amdp-registry.skala-ai.com/skala25a/sk199-custom-jenkins-amd64:1.0
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          echo "Jenkins 초기화 시작..."
+          
+          # 권한 설정
+          chown -R 1000:1000 /var/jenkins_home
+
+          cp /var/jenkins_home/credentials.yaml /tmp/credentials.yaml.before
+          
+          # 플러그인 복사 (없을 때만)
+          if [ ! "$(ls -A /var/jenkins_home/plugins 2>/dev/null)" ]; then
+            echo "플러그인 복사 중..."
+            cp -r /usr/share/jenkins/ref/plugins/* /var/jenkins_home/plugins/ 2>/dev/null || true
+          fi
+          
+          # kube-config 복사 (없을 때만)  
+          if [ ! -f /var/jenkins_home/kube-config ] && [ -f /opt/jenkins-init/kube-config ]; then
+            echo "kube-config 복사 중..."
+            cp /opt/jenkins-init/kube-config /var/jenkins_home/kube-config
+            chmod 600 /var/jenkins_home/kube-config
+          fi
+          
+          cp /tmp/credentials.yaml.before /var/jenkins_home/credentials.yaml
+          echo "Jenkins 초기화 완료"
+        volumeMounts:
+        - name: jenkins-home
+          mountPath: /var/jenkins_home
+        securityContext:
+          runAsUser: 0
+      containers:
+      - name: jenkins
+        image: amdp-registry.skala-ai.com/skala25a/sk199-custom-jenkins-amd64:1.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: http-port
+        - containerPort: 50000
+          name: jnlp-port
+        env:
+        - name: JENKINS_OPTS
+          value: "--prefix=/jenkins --httpPort=8080"
+        - name: JAVA_OPTS
+          value: "-Xmx2048m -Djenkins.install.runSetupWizard=false -Djenkins.CLI.disabled=true -Djenkins.security.ApiTokenProperty.adminCanGenerateNewTokens=true"
+        - name: CASC_JENKINS_CONFIG
+          value: /var/jenkins_config/jenkins.yaml
+        volumeMounts:
+        - name: jenkins-home
+          mountPath: /var/jenkins_home
+        - name: jenkins-config-volume
+          mountPath: /var/jenkins_config
+        livenessProbe:
+          httpGet:
+            path: /jenkins/login
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 10
+        readinessProbe:
+          httpGet:
+            path: /jenkins/login
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 10
+      volumes:
+      - name: jenkins-home
+        persistentVolumeClaim:
+          claimName: sk199-custom-jenkins-pvc
+      - name: jenkins-config-volume
+        configMap:
+          name: sk199-custom-jenkins-config
