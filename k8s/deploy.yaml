@@ -11,10 +11,10 @@ spec:
   template:
     metadata:
       annotations:
-        prometheus.io/scrape: 'true'
-        prometheus.io/port: '8080'
-        prometheus.io/path: '/actuator/prometheus'
-        update: 40706026
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/actuator/prometheus"
+        update: "40706026"   # ✅ 문자열로 변경
       labels:
         app: sk108-myfirst-api-server
     spec:
@@ -30,8 +30,3 @@ spec:
           value: skala-practice
         - name: SPRING_PROFILES_ACTIVE
           value: "prod"
-
-
-
-
-
