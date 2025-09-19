@@ -3,6 +3,8 @@ kind: Service
 metadata:
   name: sk108-myfirst-api-server
   namespace: skala-practice
+  labels:                     # ✅ 여기 추가
+    app: sk108-myfirst-api-server
 spec:
   selector:
     app: sk108-myfirst-api-server

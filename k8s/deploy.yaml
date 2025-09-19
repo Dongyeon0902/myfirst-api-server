@@ -14,7 +14,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8080"
         prometheus.io/path: "/actuator/prometheus"
-        update: "40706026"   # ✅ 문자열로 변경
+        update: "40706026"
       labels:
         app: sk108-myfirst-api-server
     spec:
@@ -23,6 +23,11 @@ spec:
       - name: myfirst-api-server
         image: amdp-registry.skala-ai.com/skala25a/sk108-myfirst-api-server:1.0.0
         imagePullPolicy: Always
+        ports:             # ✅ 추가
+          - containerPort: 8080
+            name: http
+          - containerPort: 8081
+            name: mgmt
         env:
         - name: USER_NAME
           value: sk108
